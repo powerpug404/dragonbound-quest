@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dragonbound Quest — Prototype</title>
+<style>
+:root{--bg:#151b20;--panel:#202a30;--panel2:#29363d;--line:#42515a;--text:#f3f1e8;--muted:#b4c0c3;--gold:#e7bd68;--green:#70c887;--red:#e86b6b;--blue:#70a9f7}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:10px 12px;cursor:pointer;user-select:none}
+button:active{transform:scale(.97);filter:brightness(1.2)}
+button:disabled{opacity:.4}
+#app{height:100dvh;max-width:900px;margin:auto;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);gap:8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 1px}
+.brand{font-weight:900;letter-spacing:.03em;font-size:clamp(15px,4vw,21px)}.brand span{color:var(--gold)}
+#areaName{font-size:12px;color:var(--muted);text-align:right}
+#bars{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.stat{background:var(--panel);border:1px solid var(--line);padding:7px 9px;border-radius:10px;min-width:0}
+.statTop{display:flex;justify-content:space-between;gap:3px;font-size:11px;font-weight:800;margin-bottom:5px}.statTop small{color:var(--muted);font-weight:600}
+.bar{height:8px;border-radius:9px;background:#101518;overflow:hidden}.fill{height:100%;width:100%;transition:width .15s}
+#healthFill{background:var(--red)}#magicFill{background:var(--blue)}#hungerFill{background:var(--gold)}
+#sceneWrap{position:relative;flex:1;min-height:150px;background:#11171a;border:2px solid #52616a;border-radius:14px;overflow:hidden}
+#game{display:block;width:100%;height:100%;image-rendering:pixelated}
+#sceneTag{position:absolute;top:8px;left:8px;background:#101619d9;border:1px solid #59676d;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:800;pointer-events:none}
+#toast{position:absolute;left:50%;top:43px;transform:translateX(-50%);background:#101619ed;border:1px solid #718087;border-radius:9px;padding:8px 12px;font-size:12px;text-align:center;max-width:90%;display:none;z-index:3}
+#bottom{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#controls{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,42px);gap:4px;justify-content:start;align-content:center}
+#controls button{padding:0;font-size:18px;font-weight:900;border-radius:11px;touch-action:none}
+#up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:3;grid-row:2}
+#actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;align-content:center}
+.action{min-height:66px;font-weight:900;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.action .emoji{font-size:23px}.attack{background:#633438;border-color:#a75b61}.block{background:#294b55;border-color:#5c9aa6}
+#utility{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+#utility button{font-size:12px;font-weight:800;padding:10px 4px}
+#hint{color:var(--muted);font-size:11px;text-align:center;line-height:1.3;padding-bottom:2px}
+.overlay{position:fixed;inset:0;background:#080c0edb;z-index:10;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.show{display:flex}
+.sheet{width:min(560px,100%);max-height:85dvh;overflow:auto;background:var(--panel);border:1px solid #53636b;border-radius:18px;padding:16px;box-shadow:0 15px 60px #0008}
+.sheetHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.sheet h2{font-size:20px;margin:0}.close{padding:5px 10px}
+#inventoryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.slot{min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;padding:7px 2px;background:#182126}
+.slot.selected{outline:2px solid var(--gold);border-color:var(--gold)}.slot .itemEmoji{font-size:24px}.slot .itemName{font-size:10px}.slot .qty{font-size:10px;color:var(--gold)}
+#selectedInfo{background:#182126;border-radius:12px;padding:12px;margin-top:10px;font-size:13px}
+.rowButtons{display:flex;gap:8px;margin-top:10px}.rowButtons button{flex:1}
+.recipe{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.recipe:last-child{border-bottom:0}.recipe strong{display:block;font-size:14px}.recipe small{color:var(--muted);font-size:11px;display:block;margin-top:3px}
+#messageText{line-height:1.5;color:#e6e8e3;font-size:14px}
+.puzzleChoices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.puzzleChoices button{font-size:24px;padding:16px 5px}
+
+#mainMenu{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#11191deF,#0c1116f7),radial-gradient(ellipse at 50% 35%,#38534c,#11191d 70%);overflow:auto}
+.menuCard{width:min(520px,100%);text-align:center;background:#1c272d;border:1px solid #53636b;border-radius:22px;padding:clamp(20px,5vw,34px);box-shadow:0 20px 70px #0009}
+.menuDragon{font-size:64px;line-height:1.2;filter:drop-shadow(0 8px 10px #0008)}
+.menuTitle{font-weight:1000;font-size:clamp(28px,7vw,42px);line-height:1.05;letter-spacing:.025em;margin:8px 0 5px}
+.menuTitle span{color:var(--gold)}
+.menuSub{color:var(--muted);font-size:13px;line-height:1.5;margin:0 auto 22px;max-width:340px}
+.menuButtons{display:grid;gap:10px}
+.menuButtons button{min-height:52px;font-weight:900;font-size:15px}
+#playBtn{background:#537c5b;border-color:#80b28a}
+.menuFoot{font-size:11px;color:#8f9da2;margin-top:18px}
+#mainMenu.hidden{display:none}
+
+@media(min-width:650px){#app{padding:10px 18px;gap:10px}#sceneWrap{min-height:280px}#controls{grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,48px)}.action{min-height:75px}#hint{font-size:12px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand">🐉 DRAGONBOUND <span>QUEST</span></div><div id="areaName">VILLAGE<br><small id="goldText">🪙 25 gold</small></div></header>
+<section id="bars">
+  <div class="stat"><div class="statTop"><span>❤️ HEALTH</span><small id="healthText">100/100</small></div><div class="bar"><div class="fill" id="healthFill"></div></div></div>
+  <div class="stat"><div class="statTop"><span>✨ MAGIC</span><small id="magicText">30/30</small></div><div class="bar"><div class="fill" id="magicFill"></div></div></div>
+  <div class="stat"><div class="statTop"><span>🍗 HUNGER</span><small id="hungerText">100/100</small></div><div class="bar"><div class="fill" id="hungerFill"></div></div></div>
+</section>
+<div id="sceneWrap"><canvas id="game" aria-label="Top-down RPG game"></canvas><div id="sceneTag">SAFE VILLAGE</div><div id="toast"></div></div>
+<section id="bottom">
+  <div id="controls" aria-label="Movement controls">
+    <button id="up" aria-label="Move up">▲</button><button id="left" aria-label="Move left">◀</button><button id="down" aria-label="Move down">▼</button><button id="right" aria-label="Move right">▶</button>
+  </div>
+  <div id="actions">
+    <button class="action block" id="blockBtn"><span class="emoji">🛡️</span>HOLD BLOCK</button>
+    <button class="action attack" id="attackBtn"><span class="emoji">⚔️</span>ATTACK</button>
+  </div>
+</section>
+<section id="utility"><button id="inventoryBtn">🎒 Inventory</button><button id="interactBtn">🪵 Interact</button><button id="spellBtn">✨ Spells (1–4)</button><button id="saveBtn">💾 Saved</button></section>
+<div id="hint">Move with arrows or WASD. Explore the swamp and dungeon, cook in the village, and sell items only at Mirel’s shop.</div>
+</div>
+
+<div id="mainMenu">
+  <div class="menuCard">
+    <div class="menuDragon">🐉</div>
+    <div class="menuTitle">DRAGONBOUND<br><span>QUEST</span></div>
+    <p class="menuSub">A small fantasy adventure. Gather supplies, master your blade, and uncover the secret buried beneath the village.</p>
+    <div class="menuButtons">
+      <button id="playBtn">▶ &nbsp; PLAY GAME</button>
+      <button id="continueBtn">↻ &nbsp; CONTINUE ADVENTURE</button>
+      <button id="menuHelpBtn">📜 &nbsp; HOW TO PLAY</button>
+    </div>
+    <div class="menuFoot">VILLAGE • DUNGEON • SURVIVE • GROW STRONGER</div>
+  </div>
+</div>
+
+<div class="overlay" id="inventoryOverlay"><div class="sheet">
+  <div class="sheetHead"><h2>🎒 Inventory <span id="slotCount" style="font-size:12px;color:var(--muted)"></span></h2><button class="close" data-close="inventoryOverlay">✕</button></div>
+  <div id="inventoryGrid"></div><div id="selectedInfo">Choose an item to use, equip at home, or drop.</div>
+  <div class="rowButtons"><button id="useItemBtn">Use / Equip</button><button id="dropItemBtn">Drop 1</button></div>
+</div></div>
+<div class="overlay" id="shopOverlay"><div class="sheet"><div class="sheetHead"><h2>🧙 Mirel’s General Shop</h2><button class="close" data-close="shopOverlay">✕</button></div><p id="shopGold" style="color:var(--gold)">Gold: 25</p><div id="shopItems"></div><h3>Sell items</h3><p style="font-size:12px;color:var(--muted)">You can only sell items while visiting Mirel.</p><div id="shopSellItems"></div></div></div>
+<div class="overlay" id="spellOverlay"><div class="sheet"><div class="sheetHead"><h2>✨ Spellbook · Four Slots</h2><button class="close" data-close="spellOverlay">✕</button></div><p style="color:var(--muted);font-size:13px">Choose exactly four equipped spells. Spells can only be changed at home. Tap a spell to cast it; slots 1–4 also work on a keyboard.</p><div id="spellList"></div><p id="spellStatus"></p></div></div>
+<div class="overlay" id="cookingOverlay"><div class="sheet">
+  <div class="sheetHead"><h2>🔥 Village Cookfire</h2><button class="close" data-close="cookingOverlay">✕</button></div>
+  <p style="color:var(--muted);font-size:13px;margin-top:0">Turn dungeon finds into food. Ingredients are consumed only when you cook.</p>
+  <div id="recipes"></div>
+</div></div>
+<div class="overlay" id="puzzleOverlay"><div class="sheet">
+  <div class="sheetHead"><h2>🔮 The Rune Lock</h2><button class="close" data-close="puzzleOverlay">✕</button></div>
+  <div id="messageText">Three runes guard the sealed passage. The inscription reads: “First the flame, then the moon, then the leaf.” Activate the runes in that order.</div>
+  <div class="puzzleChoices"><button data-rune="🔥">🔥</button><button data-rune="🌙">🌙</button><button data-rune="🍃">🍃</button></div>
+  <p id="puzzleStatus" style="font-size:12px;color:var(--muted)">Sequence: 0 / 3</p><button id="resetPuzzle" style="width:100%">Reset sequence</button>
+</div></div>
+<div class="overlay" id="helpOverlay"><div class="sheet">
+  <div class="sheetHead"><h2>📜 Field Notes</h2><button class="close" data-close="helpOverlay">✕</button></div>
+  <div id="messageText">
+  <p><strong>Village:</strong> Safe place to recover and cook. Stand near the campfire and press Interact.</p>
+  <p><strong>Dungeon:</strong> Slimes and skeletons roam the halls. Defeat them for meat, mushrooms, herbs, and stone.</p>
+  <p><strong>Combat:</strong> Tap Attack when a monster is close. Hold Block before its attack lands to prevent damage.</p>
+  <p><strong>Swamplands:</strong> Find the ancient stone to reveal the dungeon. Clear each level to open its chest.</p><p><strong>Spells:</strong> Equip four at home, then cast them from the spellbook. Magic regenerates over time.</p><p><strong>Hearthward Charm:</strong> Takes 15 seconds and all your magic to teleport home.</p>
+  <p><strong>Hunger:</strong> Falls slowly while in the dungeon. At low hunger, you lose health. Cook food back in the village.</p>
+  </div><button id="newGameBtn" style="width:100%;margin-top:10px">Start a new save</button>
+</div></div>
+<script>
+(() => {
+'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const TILE=32;
+const itemDefs={
+ wood:{name:'Wood',emoji:'🪵',desc:'Useful crafting material.'},
+ rawMeat:{name:'Raw Meat',emoji:'🥩',desc:'Cook it at the village campfire.'},
+ mushroom:{name:'Mushroom',emoji:'🍄',desc:'A hearty ingredient for soup.'},
+ herb:{name:'Herb',emoji:'🌿',desc:'A useful cooking ingredient.'},
+ stone:{name:'Dungeon Stone',emoji:'🪨',desc:'Hard stone gathered from defeated foes.'},
+ cookedMeat:{name:'Cooked Meat',emoji:'🍖',desc:'Restores 30 hunger and 5 health.'},
+ soup:{name:'Mushroom Soup',emoji:'🍲',desc:'Restores 25 hunger and 15 health.'},
+ stew:{name:'Hearty Stew',emoji:'🥘',desc:'Restores 40 hunger and 25 health.'},
+ sword:{name:'Iron Sword',emoji:'⚔️',desc:'Iron blade · weight 5 · deals extra damage.',equipment:true,weight:5,value:12},
+ leatherArmor:{name:'Leather Armor',emoji:'🥋',desc:'Light armor · defense 2 · weight 4.',equipment:true,weight:4,value:18},
+ ironArmor:{name:'Iron Armor',emoji:'🛡️',desc:'Heavy armor · defense 5 · weight 12.',equipment:true,weight:12,value:40},
+ protein:{name:'Protein Shake',emoji:'🥤',desc:'Restores 45 hunger instantly.',value:6},
+ healthPotion:{name:'Health Potion',emoji:'🧪',desc:'Restores 45 health instantly.',value:8},
+ magicPotion:{name:'Magic Potion',emoji:'🔷',desc:'Restores 20 magic instantly.',value:8},
+ swampMoss:{name:'Swamp Moss',emoji:'🌿',desc:'A strange swamp ingredient.',value:3},
+ spellbookAttack:{name:'Ember Dart Spellbook',emoji:'📕',desc:'Learn the Ember Dart attack spell.',value:0},
+ spellbookHealth:{name:'Mending Light Spellbook',emoji:'📗',desc:'Learn the Mending Light healing spell.',value:0},
+ spellbookHunger:{name:'Satiety Spellbook',emoji:'📘',desc:'Learn the Satiety hunger spell.',value:0},
+ spellbookDefense:{name:'Aegis Spellbook',emoji:'📙',desc:'Learn the Aegis defense spell.',value:0},
+ immortalRune:{name:'Eternity Sigil',emoji:'🌟',desc:'Dungeon relic: unlocks the 15-second immortality spell.',value:0},
+ hearthCharm:{name:'Hearthward Charm',emoji:'🏠',desc:'Use anytime to begin a 15-second home teleport. Consumes all magic; teleport completes if you survive.',value:0}
+};
+const state={
+ area:'village',x:5.5*TILE,y:5.5*TILE,dir:{x:1,y:0},health:100,magic:30,hunger:100,
+ inventory:{wood:3,rawMeat:1,mushroom:0,herb:0,stone:0,cookedMeat:1,soup:0,stew:0,sword:0,leatherArmor:0,ironArmor:0,protein:1,healthPotion:1,magicPotion:1,swampMoss:0,spellbookAttack:0,spellbookHealth:0,spellbookHunger:0,spellbookDefense:0,immortalRune:0,hearthCharm:1},gold:25,weapon:'wood',armor:'none',learnedSpells:[],spells:[],immortalUntil:0,teleportUntil:0,level:1,chestClaimed:{},homeStorage:{},
+ selected:'rawMeat',enemies:[],drops:[],puzzleSolved:false,puzzleProgress:0,
+ roomUnlocked:false,attackCooldown:0,enemySpawnTimer:0,toastTimer:0,block:false,move:{x:0,y:0},
+ defeated:0,lastTime:0,elapsed:0,saveText:'Saved'
+};
+const maps={
+ village:[
+ '####################',
+ '#..................#',
+ '#....W.............#',
+ '#..................#',
+ '#..H......C........#',
+ '#..................#',
+ '#...........D......#',
+ '#..................#',
+ '#..................#',
+ '#..................#',
+ '#..................#',
+ '#..................#',
+ '####################'
+ ],
+ dungeon:[
+ '####################',
+ '#..................#',
+ '#..##..............#',
+ '#..##......M.......#',
+ '#..................#',
+ '#...........###....#',
+ '#..................#',
+ '#....M.............#',
+ '#..................#',
+ '#..........R.......#',
+ '#..................#',
+ '#..............E...#',
+ '####################'
+ ],
+ swamp:[
+ '########################', '#....T......T...........#', '#..~~~~....~~~~...T.....#', '#..~..~....~..~.........#', '#..~..~..R.~..~....T....#', '#..~~~~....~~~~.........#', '#.....T...........~~~~..#', '#.............T...~..~..#', '#..T...............~..~.#', '#........~~~~.......~~..#', '#...T....~..~............#', '#........~~~~............#', '#.......................#', '########################'
+ ],
+ home:[
+ '############', '#..........#', '#..........#', '#....B.....#', '#..........#', '#..C.......#', '#..........#', '#.....D....#', '############'
+ ],
+ deep:[
+ '####################',
+ '#..................#',
+ '#..M...............#',
+ '#...........##.....#',
+ '#..................#',
+ '#......R...........#',
+ '#..................#',
+ '#..............M...#',
+ '#..................#',
+ '#..........E.......#',
+ '#..................#',
+ '#..................#',
+ '####################'
+ ]
+};
+let currentMap=[];
+function loadArea(area,spawn){
+ state.area=area;currentMap=maps[area].map(r=>r.split(''));
+ state.enemies=[];state.drops=[];
+ if(area==='dungeon'||area==='deep'||area==='swamp'){
+  currentMap.forEach((row,ty)=>row.forEach((c,tx)=>{if(c==='M'){state.enemies.push(makeEnemy(area==='swamp'?'bogling':'slime',(tx+.5)*TILE,(ty+.5)*TILE));row[tx]='.'}else if(c==='E'){state.enemies.push(makeEnemy('skeleton',(tx+.5)*TILE,(ty+.5)*TILE));row[tx]='.'}}));
+ }
+ if(area==='dungeon'){for(let i=0;i<state.level;i++){const ex=(4+i*3.1)*TILE,ey=(3+i*2.1)*TILE;if(canMove(ex,ey))state.enemies.push(makeEnemy(state.level>=3&&i%2?'skeleton':'slime',ex,ey));}}
+ if(spawn){state.x=spawn.x;state.y=spawn.y}else if(area==='village'){state.x=5.5*TILE;state.y=6.5*TILE}else if(area==='home'){state.x=6.5*TILE;state.y=6.5*TILE}else{state.x=2.5*TILE;state.y=10.5*TILE}
+ $('areaName').innerHTML=(area==='village'?'VILLAGE':area==='home'?'YOUR HOME':area==='swamp'?'THE SWAMPLANDS':area==='dungeon'?'DUNGEON · LEVEL '+state.level:'DUNGEON · LEVEL '+state.level)+'<br><small id="goldText">🪙 '+state.gold+' gold</small>'; 
+ $('sceneTag').textContent=area==='village'?'SAFE VILLAGE':area==='home'?'YOUR HOME':area==='swamp'?'THE SWAMPLANDS':('DUNGEON — LEVEL '+state.level);
+ $('sceneTag').style.color=area==='village'?'#9be0a9':'#f0c5a3';
+ toast(area==='village'?'The village is safe. Visit the cookfire to make food.':area==='dungeon'?'The air is cold. Watch for monsters.':'You have entered the lower hall.');
+ save();
+}
+function makeEnemy(type,x,y){const scale=1+(state.level-1)*.35;const hp=Math.round((type==='skeleton'?48:type==='bogling'?20:30)*scale);return {type,x,y,hp,max:hp,cd:Math.random()*.7,flash:0,breach:type==='skeleton'?3+(state.level-1):type==='bogling'?0:1+(state.level-1)};}
+function tileAt(px,py){const tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);if(ty<0||ty>=currentMap.length||tx<0||tx>=currentMap[0].length)return '#';return currentMap[ty][tx]}
+function solid(px,py){const t=tileAt(px,py);return t==='#'||((state.area==='village'&&t==='H')||(state.area==='home'&&t==='#'))||(state.area!=='village'&&t==='#')}
+function canMove(x,y){const r=9;return !solid(x-r,y-r)&&!solid(x+r,y-r)&&!solid(x-r,y+r)&&!solid(x+r,y+r)}
+function toast(msg){const el=$('toast');el.textContent=msg;el.style.display='block';state.toastTimer=2.4}
+function addItem(key,n=1){const current=Object.values(state.inventory).reduce((a,b)=>a+b,0);if(current+n>99){toast('Your pack is too full!');return}state.inventory[key]=(state.inventory[key]||0)+n;renderInventory();save()}
+function consume(key,n=1){if((state.inventory[key]||0)<n)return false;state.inventory[key]-=n;return true}
+function near(x,y,range=44){return Math.hypot(state.x-x,state.y-y)<range}
+function interact(){
+ if(state.area==='village'){
+  if(near(10.5*TILE,4.5*TILE,60)){openCooking();return}
+  if(near(13.5*TILE,6.5*TILE,60)){loadArea('swamp');toast('The old swamp hides a secret. Search for the marked stone.');return}
+  if(near(7.5*TILE,4.5*TILE,60)){openShop();return}
+  if(near(5.5*TILE,2.5*TILE,60)){loadArea('home');return}
+  toast('Find Mirel’s shop, enter your home, or follow the swamp path.');return;
+ }
+ if(state.area==='home'){if(near(6.5*TILE,3.5*TILE,50)){state.health=100;state.hunger=100;state.magic=30;toast('You slept well. All bars restored.');save();return}if(near(3.5*TILE,5.5*TILE,50)){openChestStorage();return}if(near(6.5*TILE,7.5*TILE,60)){loadArea('village');return}toast('Bed restores you; chest stores items.');return}
+ if(state.area==='swamp'&&near(8.5*TILE,4.5*TILE,62)){state.level=1;loadArea('dungeon');toast('The stone sinks into the mud. A hidden stair opens beneath it!');return}
+ const runeX=11.5*TILE,runeY=9.5*TILE;
+ if(near(runeX,runeY,58)&&!state.puzzleSolved){$('puzzleOverlay').classList.add('show');return}
+ if(state.area==='dungeon'&&near(16.5*TILE,11.5*TILE,58)){if(state.enemies.length){toast('The level chest is sealed until every enemy is defeated.');return}if(!state.chestClaimed[state.level]){state.gold+=20+state.level*5;state.chestClaimed[state.level]=true;if(state.level>=3){addItem('immortalRune',1);toast('Final chest: Eternity Sigil acquired!');}else{addItem('stone',2);toast('Chest opened! Gold and dungeon stone found.')}}if(state.level<3){state.level++;loadArea('dungeon');}else{toast('Dungeon complete. The Eternity Sigil is yours.');loadArea('village')}return}
+ if(state.area==='deep'&&near(16.5*TILE,9.5*TILE,60)){toast('The deepest gate is sealed.');return}
+ if(state.area==='deep'&&near(16.5*TILE,9.5*TILE,60)){toast('A huge sealed gate lies ahead. The dragon is beyond it — coming in a future update.');return}
+ toast('Nothing to interact with nearby. Move closer to a marked object.');
+}
+const shopStock=[['leatherArmor','Leather Armor',18],['ironArmor','Iron Armor',40],['protein','Protein Shake',6],['healthPotion','Health Potion',8],['magicPotion','Magic Potion',8],['sword','Iron Sword',24],['spellbookAttack','Ember Dart Spellbook',12],['spellbookHealth','Mending Light Spellbook',12],['spellbookHunger','Satiety Spellbook',12],['spellbookDefense','Aegis Spellbook',12]];
+function openShop(){const root=$('shopItems');root.innerHTML='';$('shopGold').textContent='Gold: '+state.gold;shopStock.forEach(([key,name,cost])=>{const r=document.createElement('div');r.className='recipe';const d=document.createElement('div');d.innerHTML='<strong>'+itemDefs[key].emoji+' '+name+'</strong><small>'+cost+' gold</small>';const b=document.createElement('button');b.textContent='Buy';b.disabled=state.gold<cost;b.onclick=()=>{if(state.gold<cost)return;state.gold-=cost;if(key.startsWith('spellbook')){const spell={spellbookAttack:'Ember Dart',spellbookHealth:'Mending Light',spellbookHunger:'Satiety',spellbookDefense:'Aegis'}[key];if(state.inventory[key]){state.gold+=cost;toast('You already own that spellbook.');return}state.inventory[key]=1;toast(name+' purchased. Go home to learn/equip it from Spells.')}else addItem(key,1);openShop();updateGold();save()};r.append(d,b);root.append(r)});const sell=$('shopSellItems');sell.innerHTML='';Object.keys(itemDefs).forEach(k=>{const count=state.inventory[k]||0, value=itemDefs[k].value||0;if(count<1||value<1)return;const r=document.createElement('div');r.className='recipe';const d=document.createElement('div');d.innerHTML='<strong>'+itemDefs[k].emoji+' '+itemDefs[k].name+' ×'+count+'</strong><small>Sell for '+value+' gold each</small>';const b=document.createElement('button');b.textContent='Sell 1';b.onclick=()=>{if(state.area!=='village'){toast('You can only sell items at Mirel’s shop.');return}if(!consume(k,1))return;state.gold+=value;toast('Sold '+itemDefs[k].name+' for '+value+' gold.');renderInventory();openShop();updateGold();save()};r.append(d,b);sell.append(r)});if(!sell.children.length)sell.textContent='No sellable items in your inventory.';$('shopOverlay').classList.add('show')}
+function updateGold(){const el=$('goldText');if(el)el.textContent='🪙 '+state.gold+' gold'}
+function openChestStorage(){const key=prompt('Chest storage. Type an item key to store 1 (e.g. rawMeat, stone, sword), or type TAKE:itemkey to retrieve.');if(!key)return;if(key.startsWith('TAKE:')){const k=key.slice(5);if((state.homeStorage[k]||0)>0){state.homeStorage[k]--;addItem(k,1);toast('Retrieved '+itemDefs[k]?.name+'.')}else toast('Nothing stored under that item.')}else if(itemDefs[key]&&(state.inventory[key]||0)>0){consume(key);state.homeStorage[key]=(state.homeStorage[key]||0)+1;toast('Stored 1 '+itemDefs[key].name+'.')}else toast('That item is not in your pack.');renderInventory();save()}
+function openCooking(){renderRecipes();$('cookingOverlay').classList.add('show')}
+const recipes=[
+ {key:'cookedMeat',title:'Cooked Meat',emoji:'🍖',ingredients:{rawMeat:1},desc:'1 Raw Meat · +30 hunger, +5 health'},
+ {key:'soup',title:'Mushroom Soup',emoji:'🍲',ingredients:{mushroom:2,herb:1},desc:'2 Mushrooms + 1 Herb · +25 hunger, +15 health'},
+ {key:'stew',title:'Hearty Stew',emoji:'🥘',ingredients:{rawMeat:2,herb:2},desc:'2 Raw Meat + 2 Herbs · +40 hunger, +25 health'}
+];
+function renderRecipes(){
+ const root=$('recipes');root.innerHTML='';
+ recipes.forEach(r=>{const row=document.createElement('div');row.className='recipe';const info=document.createElement('div');info.innerHTML='<strong>'+r.emoji+' '+r.title+'</strong><small>'+r.desc+'</small>';const btn=document.createElement('button');btn.textContent='Cook';btn.disabled=!Object.entries(r.ingredients).every(([k,n])=>(state.inventory[k]||0)>=n);btn.onclick=()=>{Object.entries(r.ingredients).forEach(([k,n])=>consume(k,n));addItem(r.key,1);toast(r.title+' cooked!');renderRecipes();renderInventory();save()};row.append(info,btn);root.append(row)});
+}
+function openInventory(){renderInventory();$('inventoryOverlay').classList.add('show')}
+function renderInventory(){
+ const grid=$('inventoryGrid');grid.innerHTML='';const keys=Object.keys(itemDefs);
+ keys.forEach(k=>{const count=state.inventory[k]||0;const b=document.createElement('button');b.className='slot'+(state.selected===k?' selected':'');b.innerHTML='<span class="itemEmoji">'+itemDefs[k].emoji+'</span><span class="itemName">'+itemDefs[k].name+'</span><span class="qty">×'+count+'</span>';b.onclick=()=>{state.selected=k;renderInventory()};grid.appendChild(b)});
+ $('slotCount').textContent=Object.values(state.inventory).reduce((a,b)=>a+b,0)+' items';
+ const def=itemDefs[state.selected];$('selectedInfo').innerHTML='<strong>'+def.emoji+' '+def.name+'</strong><br>'+def.desc+'<br><span style="color:var(--gold)">Owned: '+(state.inventory[state.selected]||0)+'</span>';
+ $('useItemBtn').textContent=state.selected==='sword'?'Equip sword':'Use item';
+ $('useItemBtn').disabled=!(state.inventory[state.selected]>0);
+}
+function useSelected(){
+ const k=state.selected;if(!(state.inventory[k]>0)){toast('You do not have that item.');return}
+ if(k==='cookedMeat'){consume(k);state.hunger=clamp(state.hunger+30,0,100);state.health=clamp(state.health+5,0,100);toast('You ate cooked meat.');}
+ else if(k==='soup'){consume(k);state.hunger=clamp(state.hunger+25,0,100);state.health=clamp(state.health+15,0,100);toast('Warm soup restores you.');}
+ else if(k==='stew'){consume(k);state.hunger=clamp(state.hunger+40,0,100);state.health=clamp(state.health+25,0,100);toast('Hearty stew hits the spot.');}
+ else if(k==='rawMeat'||k==='mushroom'||k==='herb'){toast('Cook ingredients at the village campfire first.');return}
+ else if(k==='protein'){consume(k);state.hunger=clamp(state.hunger+45,0,100);toast('Protein shake: hunger restored.');}
+ else if(k==='healthPotion'){consume(k);state.health=clamp(state.health+45,0,100);toast('Health restored.');}
+ else if(k==='magicPotion'){consume(k);state.magic=clamp(state.magic+20,0,100);toast('Magic restored.');}
+ else if(k==='sword'){if(state.area!=='home'){toast('Equipment can only be changed at home.');return}state.weapon='iron';toast('Iron sword equipped!');}
+ else if(k==='leatherArmor'||k==='ironArmor'){if(state.area!=='home'){toast('Armor can only be changed at home.');return}state.armor=k;toast(itemDefs[k].name+' equipped.');}
+ else if(k.startsWith('spellbook')){if(state.area!=='home'){toast('You can only learn spells at home.');return}const spell={spellbookAttack:'Ember Dart',spellbookHealth:'Mending Light',spellbookHunger:'Satiety',spellbookDefense:'Aegis'}[k];if(state.learnedSpells.includes(spell)){toast('You already know this spell.');return}if(state.spells.length>=4){toast('Your four spell slots are full. Open Spells at home to replace a slot.');return}consume(k);state.learnedSpells.push(spell);state.spells.push(spell);toast('Learned '+spell+'!');renderInventory();save();return}
+ else if(k==='immortalRune'){toast('The Eternity Sigil unlocks the Immortal Veil spell.');return}
+ else if(k==='hearthCharm'){if(state.magic<99){toast('The home teleport requires a full magic bar.');return}state.magic=0;state.teleportUntil=state.elapsed+15;toast('Homeward channel started. Survive for 15 seconds!');}
+ else{toast('That item cannot be used right now.');return}
+ renderInventory();updateBars();save();
+}
+function openSpells(){renderSpells();$('spellOverlay').classList.add('show')}
+function renderSpells(){const root=$('spellList');root.innerHTML='';const all=[['Ember Dart','Attack spell · 5 magic · damages nearby enemy.','spellbookAttack'],['Mending Light','Health spell · 8 magic · restores 30 health.','spellbookHealth'],['Satiety','Hunger spell · 6 magic · restores 40 hunger.','spellbookHunger'],['Aegis','Defense spell · 8 magic · blocks all damage for 8 seconds.','spellbookDefense'],['Immortal Veil','Ultimate · all magic · 15 seconds invulnerable.','immortalRune']];all.forEach(([name,desc,unlockKey])=>{const r=document.createElement('div');r.className='recipe';const d=document.createElement('div');d.innerHTML='<strong>'+name+(state.spells.includes(name)?' ✓':'')+'</strong><small>'+desc+'</small>';const b=document.createElement('button');const unlocked=(name==='Immortal Veil'?(state.inventory.immortalRune>0||state.spells.includes(name)):(state.learnedSpells.includes(name)||state.spells.includes(name))); b.textContent=state.spells.includes(name)?'Cast':(!unlocked?'Locked':(state.spells.length<4?'Equip':'Replace slot 4'));b.disabled=!unlocked;b.onclick=()=>{if(state.spells.includes(name)){castSpell(state.spells.indexOf(name));return}if(state.area!=='home'){toast('You can only change spells at home.');return}if(name==='Immortal Veil'&&!(state.inventory.immortalRune>0)){toast('Find the Eternity Sigil in the final chest first.');return}if(state.spells.length>=4)state.spells[3]=name;else state.spells.push(name);renderSpells();save()};r.append(d,b);root.append(r)});$('spellStatus').textContent='Equipped: '+state.spells.join(' · ')}
+function castSpell(index){const name=state.spells[index];if(!name)return;if(name==='Ember Dart'){if(state.magic<5)return toast('Not enough magic.');state.magic-=5;const e=state.enemies.sort((a,b)=>Math.hypot(a.x-state.x,a.y-state.y)-Math.hypot(b.x-state.x,b.y-state.y))[0];if(e&&Math.hypot(e.x-state.x,e.y-state.y)<150){e.hp-=38;if(e.hp<=0){state.enemies=state.enemies.filter(x=>x!==e);state.gold+=4;addItem('stone',1)}toast('Ember Dart scorches the enemy.')}else toast('No enemy in spell range.')}else if(name==='Mending Light'){if(state.magic<8)return toast('Not enough magic.');state.magic-=8;state.health=clamp(state.health+30,0,100);toast('Mending Light restores health.')}else if(name==='Satiety'){if(state.magic<6)return toast('Not enough magic.');state.magic-=6;state.hunger=clamp(state.hunger+40,0,100);toast('Satiety quiets your hunger.')}else if(name==='Aegis'){if(state.magic<8)return toast('Not enough magic.');state.magic-=8;state.aegis=8;toast('Aegis shields you for 8 seconds.')}else if(name==='Immortal Veil'){if(state.magic<99)return toast('Immortal Veil requires a full magic bar.');state.magic=0;state.immortalUntil=state.elapsed+15;toast('IMMORTAL VEIL: 15 seconds of invulnerability!')}updateBars();save()}
+function attack(){
+ if(state.attackCooldown>0)return;
+ state.attackCooldown=.42;
+ let target=null,best=48;
+ for(const e of state.enemies){const d=Math.hypot(e.x-state.x,e.y-state.y);if(d<best){best=d;target=e}}
+ if(!target){toast('No monster in range. Get closer!');return}
+ const damage=state.weapon==='iron'?28:18;target.hp-=damage;target.flash=.18;
+ const dx=target.x-state.x,dy=target.y-state.y,mag=Math.hypot(dx,dy)||1;target.x+=dx/mag*7;target.y+=dy/mag*7;
+ if(target.hp<=0){
+  state.enemies=state.enemies.filter(e=>e!==target);state.defeated++;state.gold+=4;updateGold();
+  const roll=Math.random();if(roll<.38)addItem('rawMeat',1);else if(roll<.67)addItem('mushroom',1);else if(roll<.86)addItem('herb',1);else addItem('stone',1);
+  toast('Monster defeated! It dropped materials.');save();
+ }else toast('Hit! '+Math.max(0,target.hp)+' HP left.');
+}
+function respawn(){state.health=70;state.hunger=Math.max(30,state.hunger);state.magic=30;loadArea('village');toast('You were defeated and returned to the village. Your items are safe.')}
+function updateBars(){
+ for(const [key,val,max] of [['health',state.health,100],['magic',state.magic,30],['hunger',state.hunger,100]]){$(key+'Text').textContent=Math.ceil(val)+'/'+max;$(key+'Fill').style.width=clamp(val/max*100,0,100)+'%'}
+}
+const keys={};
+function setMove(id,x,y){const b=$(id);const start=e=>{e.preventDefault();state.move={x,y};b.setPointerCapture?.(e.pointerId)};const end=e=>{e.preventDefault();if(state.move.x===x&&state.move.y===y)state.move={x:0,y:0}};b.addEventListener('pointerdown',start);b.addEventListener('pointerup',end);b.addEventListener('pointercancel',end);b.addEventListener('lostpointercapture',end)}
+setMove('up',0,-1);setMove('down',0,1);setMove('left',-1,0);setMove('right',1,0);
+$('blockBtn').addEventListener('pointerdown',e=>{e.preventDefault();state.block=true;$('blockBtn').style.filter='brightness(1.35)'});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>$('blockBtn').addEventListener(ev,e=>{state.block=false;$('blockBtn').style.filter=''}));
+$('attackBtn').addEventListener('pointerdown',e=>{e.preventDefault();attack()});
+window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();keys[k]=true;if(k===' '||k==='j')attack();if(k==='e')interact();if(k==='i')openInventory();if(['1','2','3','4'].includes(k))castSpell(Number(k)-1);if(k==='shift')state.block=true});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.key==='Shift')state.block=false});
+$('inventoryBtn').onclick=openInventory;$('interactBtn').onclick=interact;$('saveBtn').onclick=()=>{save();toast('Progress saved on this device.')};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('show'));
+$('useItemBtn').onclick=useSelected;
+
+$('spellBtn').onclick=()=>openSpells();
+$('dropItemBtn').onclick=()=>{const k=state.selected;if(state.inventory[k]>0){consume(k);toast('Dropped 1 '+itemDefs[k].name+'.');renderInventory();save()}else toast('Nothing to drop.')};
+$('newGameBtn').onclick=()=>{if(confirm('Start over? This deletes the saved game on this device.')){localStorage.removeItem('dragonboundSave');location.reload()}};
+$('resetPuzzle').onclick=()=>{state.puzzleProgress=0;$('puzzleStatus').textContent='Sequence: 0 / 3'};
+document.querySelectorAll('[data-rune]').forEach(b=>b.onclick=()=>{
+ if(state.puzzleSolved){toast('The rune lock is already open.');return}
+ const sequence=['🔥','🌙','🍃'];const chosen=b.dataset.rune;
+ if(chosen===sequence[state.puzzleProgress]){state.puzzleProgress++;$('puzzleStatus').textContent='Sequence: '+state.puzzleProgress+' / 3';if(state.puzzleProgress===3){state.puzzleSolved=true;$('puzzleStatus').textContent='Correct! The sealed door has opened.';toast('Puzzle solved! The lower hall is unlocked.');save();setTimeout(()=>$('puzzleOverlay').classList.remove('show'),900)}}
+ else{state.puzzleProgress=0;$('puzzleStatus').textContent='Wrong rune. Sequence reset to 0 / 3';}
+});
+function save(){
+ const data={...state,move:{x:0,y:0},block:false,enemies:[],drops:[],lastTime:0};
+ try{localStorage.setItem('dragonboundSave',JSON.stringify(data));$('saveBtn').textContent='💾 Saved'}catch(e){$('saveBtn').textContent='⚠ Save'}
+}
+function restore(){
+ try{const raw=localStorage.getItem('dragonboundSave');if(!raw)return;const d=JSON.parse(raw);
+ ['area','x','y','dir','health','magic','hunger','inventory','selected','weapon','armor','gold','learnedSpells','spells','level','chestClaimed','homeStorage','immortalUntil','puzzleSolved','puzzleProgress','roomUnlocked','defeated'].forEach(k=>{if(d[k]!==undefined)state[k]=d[k]});
+ }catch(e){console.warn('Could not load save',e)}
+}
+function drawTile(tx,ty,t){
+ const x=tx*TILE,y=ty*TILE;
+ if(state.area==='swamp'){ctx.fillStyle=((tx+ty)%2)?'#243c32':'#2b4437';ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle='#354b3a';ctx.fillRect(x+3,y+4,4,3);if(t==='~'){ctx.fillStyle='#263c3b';ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle='#41605a';ctx.beginPath();ctx.ellipse(x+15,y+17,12,7,.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7b8970';ctx.fillRect(x+7,y+12,2,2);ctx.fillRect(x+22,y+21,3,2)}if(t==='T'||t==='#'){ctx.fillStyle='#4b4938';ctx.fillRect(x+14,y+14,5,18);ctx.fillStyle='#3b5740';ctx.beginPath();ctx.arc(x+16,y+8,13,0,Math.PI*2);ctx.fill()}if(t==='R'){ctx.fillStyle='#827c6c';ctx.beginPath();ctx.moveTo(x+4,y+25);ctx.lineTo(x+7,y+9);ctx.lineTo(x+17,y+2);ctx.lineTo(x+28,y+12);ctx.lineTo(x+25,y+27);ctx.closePath();ctx.fill();ctx.fillStyle='#b6ab91';ctx.fillRect(x+11,y+9,8,3)}return}
+ if(state.area==='home'){ctx.fillStyle='#8a6d4e';ctx.fillRect(x,y,TILE,TILE);ctx.strokeStyle='#6c513c';ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);if(t==='#'){ctx.fillStyle='#3e302a';ctx.fillRect(x,y,TILE,TILE)}if(t==='B'){ctx.fillStyle='#b5a2a0';ctx.fillRect(x+4,y+5,24,22);ctx.fillStyle='#f1ddd5';ctx.fillRect(x+5,y+5,10,7)}if(t==='C'){ctx.fillStyle='#65412d';ctx.fillRect(x+3,y+8,26,20);ctx.fillStyle='#c28a4e';ctx.fillRect(x+6,y+11,20,3)}if(t==='D'){ctx.fillStyle='#4a3024';ctx.fillRect(x+10,y+4,12,28)}return}
+ if(state.area==='village'){
+  ctx.fillStyle=((tx+ty)%2)?'#47784c':'#4d8052';ctx.fillRect(x,y,TILE,TILE);
+  ctx.fillStyle='#5d8e59';ctx.fillRect(x+3,y+4,4,3);ctx.fillRect(x+20,y+23,3,3);
+  if(t==='#'){ctx.fillStyle='#304c35';ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle='#527b49';ctx.fillRect(x+2,y+3,TILE-4,TILE-5)}
+  if(t==='H'){ctx.fillStyle='#75513b';ctx.fillRect(x+3,y+9,26,22);ctx.fillStyle='#9d5d45';ctx.beginPath();ctx.moveTo(x-2,y+11);ctx.lineTo(x+16,y-3);ctx.lineTo(x+34,y+11);ctx.closePath();ctx.fill();ctx.fillStyle='#e5c17b';ctx.fillRect(x+12,y+18,8,13)}
+  if(t==='W'){ctx.fillStyle='#614a35';ctx.fillRect(x+13,y+16,7,16);ctx.fillStyle='#285f3a';ctx.beginPath();ctx.arc(x+16,y+12,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#367c43';ctx.beginPath();ctx.arc(x+10,y+8,8,0,Math.PI*2);ctx.fill()}
+  if(t==='C'){ctx.fillStyle='#786c63';ctx.fillRect(x+4,y+17,24,10);ctx.fillStyle='#f7a044';ctx.beginPath();ctx.moveTo(x+9,y+23);ctx.lineTo(x+16,y+5);ctx.lineTo(x+23,y+23);ctx.fill();ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.moveTo(x+13,y+23);ctx.lineTo(x+16,y+12);ctx.lineTo(x+20,y+23);ctx.fill()}
+  if(t==='D'){ctx.fillStyle='#382f36';ctx.fillRect(x+4,y+2,24,30);ctx.fillStyle='#9e9c9b';ctx.fillRect(x+2,y+1,4,31);ctx.fillRect(x+26,y+1,4,31);ctx.fillStyle='#b7a18b';ctx.fillRect(x+9,y+6,14,26);ctx.fillStyle='#45383b';ctx.fillRect(x+12,y+10,8,22)}
+ }else{
+  ctx.fillStyle=((tx+ty)%2)?'#393c40':'#414448';ctx.fillRect(x,y,TILE,TILE);
+  ctx.strokeStyle='#4e5155';ctx.lineWidth=1;ctx.strokeRect(x+1,y+1,TILE-2,TILE-2);
+  if(t==='#'){ctx.fillStyle='#292e34';ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle='#55595d';ctx.fillRect(x+2,y+2,TILE-4,TILE-4);ctx.fillStyle='#353a3f';ctx.fillRect(x+5,y+7,22,3)}
+  if(t==='R'){ctx.fillStyle='#31353a';ctx.fillRect(x+3,y+3,26,26);ctx.fillStyle=state.puzzleSolved?'#58c8d0':'#5b4e9a';ctx.beginPath();ctx.moveTo(x+16,y+6);ctx.lineTo(x+26,y+16);ctx.lineTo(x+16,y+26);ctx.lineTo(x+6,y+16);ctx.closePath();ctx.fill();ctx.fillStyle='#e6d6ff';ctx.font='16px serif';ctx.textAlign='center';ctx.fillText('✦',x+16,y+21)}
+  if(t==='E'){ctx.fillStyle='#25282c';ctx.fillRect(x+2,y+1,28,31);ctx.fillStyle=state.puzzleSolved?'#5e8b89':'#796f65';ctx.fillRect(x+7,y+4,18,28);ctx.fillStyle='#3d3940';ctx.fillRect(x+11,y+8,10,24);ctx.fillStyle='#c7ad71';ctx.fillRect(x+21,y+17,2,2)}
+ }
+}
+function drawCharacter(x,y){
+ ctx.save();ctx.translate(x,y);
+ ctx.fillStyle='#172026';ctx.beginPath();ctx.ellipse(0,8,10,5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#d6b38a';ctx.beginPath();ctx.arc(0,-4,7,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#345c83';ctx.fillRect(-7,1,14,12);ctx.fillStyle='#d5d9db';ctx.fillRect(-9,4,4,7);ctx.fillRect(5,4,4,7);
+ ctx.fillStyle='#4a3328';ctx.fillRect(-6,11,5,5);ctx.fillRect(2,11,5,5);
+ ctx.fillStyle='#f4f0dc';ctx.fillRect(state.dir.x>=0?2:-5,-6,3,2);
+ if(state.block){ctx.strokeStyle='#7dd7e8';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,14,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#9ac4c8';ctx.fillRect(state.dir.x>=0?8:-13,-7,5,14)}
+ else if(state.attackCooldown>.22){ctx.strokeStyle='#f2e1a0';ctx.lineWidth=3;ctx.beginPath();ctx.arc(state.dir.x*13,state.dir.y*13,11,-.7,1.1);ctx.stroke()}
+ ctx.restore();
+}
+function drawEnemy(e){
+ ctx.save();ctx.translate(e.x,e.y);
+ if(e.flash>0)ctx.globalAlpha=.6;
+ if(e.type==='bogling'){ctx.fillStyle='#7a8b5b';ctx.beginPath();ctx.ellipse(0,1,9,12,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d7e0a4';ctx.fillRect(-5,-4,3,3);ctx.fillRect(3,-4,3,3);ctx.fillStyle='#26342b';ctx.fillRect(-4,-3,2,2);ctx.fillRect(4,-3,2,2)}else if(e.type==='slime'){ctx.fillStyle='#4fbf82';ctx.beginPath();ctx.ellipse(0,1,12,10,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e9ffe8';ctx.fillRect(-6,-2,3,4);ctx.fillRect(4,-2,3,4);ctx.fillStyle='#1d4235';ctx.fillRect(-5,-1,2,3);ctx.fillRect(5,-1,2,3)}
+ else{ctx.fillStyle='#aaaeb5';ctx.fillRect(-8,-10,16,20);ctx.fillStyle='#d3d7db';ctx.fillRect(-6,-13,12,8);ctx.fillStyle='#b94747';ctx.fillRect(-4,-10,3,2);ctx.fillRect(2,-10,3,2);ctx.fillStyle='#777e88';ctx.fillRect(-11,-3,3,12);ctx.fillRect(8,-3,3,12);ctx.fillStyle='#d0d4db';ctx.fillRect(9,-4,3,12)}
+ ctx.globalAlpha=1;ctx.fillStyle='#171b20';ctx.fillRect(-13,-19,26,4);ctx.fillStyle='#d85b5b';ctx.fillRect(-13,-19,26*clamp(e.hp/e.max,0,1),4);
+ ctx.restore();
+}
+function render(){
+ const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+ if(canvas.width!==Math.floor(rect.width*dpr)||canvas.height!==Math.floor(rect.height*dpr)){canvas.width=Math.floor(rect.width*dpr);canvas.height=Math.floor(rect.height*dpr)}
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
+ const viewW=rect.width,viewH=rect.height;
+ const worldW=currentMap[0].length*TILE,worldH=currentMap.length*TILE;
+ const camX=clamp(state.x-viewW/2,0,Math.max(0,worldW-viewW)),camY=clamp(state.y-viewH/2,0,Math.max(0,worldH-viewH));
+ ctx.save();ctx.translate(-camX,-camY);
+ for(let ty=0;ty<currentMap.length;ty++)for(let tx=0;tx<currentMap[ty].length;tx++)drawTile(tx,ty,currentMap[ty][tx]);
+ if(state.area==='village'){
+  // Signs and area labels
+  ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillStyle='#f5e5b5';ctx.fillText('SHELTER',5.5*TILE,1.8*TILE);ctx.fillText('COOKFIRE',10.5*TILE,3.7*TILE);ctx.fillText('SWAMPLANDS →',13.5*TILE,5.7*TILE);ctx.fillText('MIREL’S SHOP',7.5*TILE,3.7*TILE);ctx.fillText('HOME',5.5*TILE,1.8*TILE);ctx.fillStyle='#d5b18a';ctx.beginPath();ctx.arc(7.5*TILE,4.5*TILE-7,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5d4032';ctx.fillRect(7.5*TILE-6,4.5*TILE-1,12,13);ctx.fillStyle='#b99b63';ctx.fillRect(7.5*TILE-8,4.5*TILE-14,16,4);
+ }else if(state.area==='swamp'){ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillStyle='#d5dfad';ctx.fillText('ANCIENT STONE',8.5*TILE,3.6*TILE)}else if(state.area==='home'){ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillStyle='#f5e5b5';ctx.fillText('BED',6.5*TILE,2.6*TILE);ctx.fillText('STORAGE CHEST',3.5*TILE,4.5*TILE)}else{
+  ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillStyle='#e2d6f6';ctx.fillText('RUNE LOCK',11.5*TILE,8.7*TILE);ctx.fillText(state.puzzleSolved?'OPEN':'SEALED',16.5*TILE,10.7*TILE);ctx.fillStyle=state.enemies.length?'#684a35':'#a77b3d';ctx.fillRect(16.5*TILE-11,11.5*TILE-7,22,15);ctx.fillStyle='#d6b06a';ctx.fillRect(16.5*TILE-10,11.5*TILE-6,20,4);ctx.fillStyle='#4c3428';ctx.fillRect(16.5*TILE-2,11.5*TILE-3,4,7);
+ }
+ state.enemies.forEach(drawEnemy);drawCharacter(state.x,state.y);ctx.restore();
+}
+function tick(ts){
+ if(!state.lastTime)state.lastTime=ts;const dt=Math.min((ts-state.lastTime)/1000,.05);state.lastTime=ts;state.elapsed+=dt;
+ const dx=(keys['arrowright']||keys['d']?1:0)-(keys['arrowleft']||keys['a']?1:0)+state.move.x;
+ const dy=(keys['arrowdown']||keys['s']?1:0)-(keys['arrowup']||keys['w']?1:0)+state.move.y;
+ const len=Math.hypot(dx,dy)||1;const weight=(state.armor==='ironArmor'?12:state.armor==='leatherArmor'?4:0)+(state.weapon==='iron'?5:1);const speed=(state.block?65:115)*Math.max(.48,1-weight*.025);
+ if(dx||dy){const mx=dx/len*speed*dt,my=dy/len*speed*dt;if(canMove(state.x+mx,state.y))state.x+=mx;if(canMove(state.x,state.y+my))state.y+=my;state.dir={x:dx/len,y:dy/len}}
+ if(state.teleportUntil>0&&state.elapsed>=state.teleportUntil){state.teleportUntil=0;loadArea('home');toast('The Hearthward Charm brings you home.')}
+ if(state.area!=='village'&&state.area!=='home'){
+  state.hunger=clamp(state.hunger-dt*(.20+weight*.009),0,100);
+  if(state.hunger<=0)state.health=clamp(state.health-dt*2,0,100);
+  state.enemies.forEach(e=>{
+   e.cd-=dt;e.flash=Math.max(0,e.flash-dt);
+   const d=Math.hypot(state.x-e.x,state.y-e.y);
+   if(d>23&&d<210){const vx=(state.x-e.x)/(d||1),vy=(state.y-e.y)/(d||1),sp=e.type==='skeleton'?29:36;const nx=e.x+vx*sp*dt,ny=e.y+vy*sp*dt;if(!solid(nx, e.y))e.x=nx;if(!solid(e.x,ny))e.y=ny}
+   if(d<27&&e.cd<=0){e.cd=1.25;const defense=state.armor==='ironArmor'?5:state.armor==='leatherArmor'?2:0;const weight=(state.armor==='ironArmor'?12:state.armor==='leatherArmor'?4:0)+(state.weapon==='iron'?5:1);const breach=e.breach||0;const blocked=state.block&&breach<=defense;if(state.elapsed<(state.aegisUntil||0)||state.elapsed<state.immortalUntil){toast('Your magic wards absorb the strike.')}else if(blocked){toast('Blocked! Armor holds.')}else{const dmg=Math.max(2,(e.type==='skeleton'?13:e.type==='bogling'?5:8)+breach*2-defense);state.health=clamp(state.health-dmg,0,100);toast(breach>defense?'The enemy breaks through your guard!':'You take '+dmg+' damage.')} }
+  });
+  if(state.enemies.length<2&&state.enemySpawnTimer<=0){state.enemySpawnTimer=12;if(Math.random()<.2){const x=15.5*TILE,y=2.5*TILE;if(canMove(x,y))state.enemies.push(makeEnemy('slime',x,y))}}else state.enemySpawnTimer-=dt;
+ }state.magic=clamp(state.magic+dt*.7,0,100);state.aegisUntil=Math.max(0,(state.aegisUntil||0));if(state.area==='swamp'&&Math.random()<dt*.08)addItem('swampMoss',1);
+
+ state.attackCooldown=Math.max(0,state.attackCooldown-dt);
+ if(state.health<=0)respawn();
+ if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)$('toast').style.display='none'}
+ updateBars();render();requestAnimationFrame(tick);
+}
+window.addEventListener('resize',render);
+restore();loadArea(state.area,{x:state.x,y:state.y});updateBars();renderInventory();updateGold();render();requestAnimationFrame(tick);
+const savedGame = (()=>{try{return !!localStorage.getItem('dragonboundSave')}catch(e){return false}})();
+$('continueBtn').disabled=!savedGame;
+$('playBtn').onclick=()=>{$('mainMenu').classList.add('hidden');toast('Adventure begins!');};
+$('continueBtn').onclick=()=>{$('mainMenu').classList.add('hidden');toast('Welcome back, adventurer!');};
+$('menuHelpBtn').onclick=()=>{$('helpOverlay').classList.add('show');};
+
+})();
+</script>
+</body>
+</html>
