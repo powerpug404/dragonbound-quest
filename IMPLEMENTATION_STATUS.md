@@ -90,6 +90,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Checked static HTML tag nesting and verified the transaction dialog's labeled, focusable controls.
 - Exercised the shared confirmation helpers in an isolated harness: confirmation executes once and leaves a nested shop open afterward.
 - Built Rune Antechamber and verified the skeleton and bat spawn on open, walkable floor cells. Exercised its Drowned Halls clear gate before and after room clear, including the legacy path for saves already in Drowned Halls.
+- Ran the new skeleton and bat through the shared attack/damage handlers; each enemy died from a normal hit, loot was awarded, and the room-clear gate activated only after both were defeated.
 - Checked HTML tag nesting and confirmed there are no external script tags.
 - Exercised all eleven room builders and verified their 28×18 dimensions and enclosed edges.
 - Verified all twelve graph links have door cells on both sides and passable arrival positions.
