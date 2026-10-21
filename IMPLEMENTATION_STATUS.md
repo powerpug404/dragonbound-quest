@@ -35,6 +35,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Added Drowned Halls as the water-mechanism room. A reachable sluice lever drains or refills a four-tile flooded passage; draining exposes a cache worth 40 gold and one frost crystal. The room state, chest state, collision, and one-time reward persist without changing the save version.
 - Added an attunable rest sigil and return gate in Broken Crossroads. The sigil persists as the dungeon checkpoint, opens a shortcut back to Ashen Entry, and is used for dungeon respawns; defeats outside the dungeon still return to the village.
 - Added the opening of The Hollow Crown: Elder Rowan entrusts the player with a saved key, a real graph door blocks the first dungeon branch until the key is used, and the journal shows the main objective. Older saves that already visited beyond the gate migrate with it open.
+- Added two discoverable seal-keeper testimonies in the Brazier Gallery and Drowned Halls. E records each clue once; the main journal counts discoveries and shows each testimony only after it is found.
 - Added this audit and implementation roadmap.
 
 ## Requirement audit
@@ -55,7 +56,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Actual dynamic lighting and wall-occluded visibility | **Partially working** | A room-sized darkness mask, player-centered accessibility reveal, warm torches, blue crystals, violet rune light, wall/sealed-door occlusion, and brief Ember/Mending illumination are implemented. Brightness and reduced motion affect the mask. Detection-spell reveals and light-revealed clues/secrets remain; browser/mobile performance has not been reviewed. |
 | Torch puzzle | **Working** | Three braziers can be lit independently with E; the third opens the connected sealed gate. The state is saved. |
 | Movable-block/pressure-plate, mirror-beam, water, statue, boulder, shadow, and final-crystal puzzles | **Partially working** | The block/plate and mirror-beam puzzles persist. Drowned Halls now has a valve-controlled flooded cache corridor: water blocks movement until drained, and the cache reward is one-time and saved. Statue, boulder, shadow, and a distinct final-crystal puzzle remain. |
-| Hollow Crown story and quest progression | **Partially working** | Elder Rowan now introduces Vareth and the failing four seals, gives the first dungeon key once, and starts the saved main objective in the journal. Seal-keeper clues, later quest stages, and saved alternate endings remain.
+| Hollow Crown story and quest progression | **Partially working** | Elder Rowan introduces Vareth and the failing four seals, gives the first dungeon key once, and starts the saved main objective. Two of four testimonies can be found and persist in the journal, which hides unfound clue text. The other two clues, later quest stages, and saved alternate endings remain.
 | Rune-sequence puzzle | **Partially working** | The existing keyboard/touch rune choice sequence opens the optional reliquary gate and saves progress. It has not received a full browser interaction test in this pass. |
 | Reusable traps with warnings and fair reset timing | **Partially working** | Spikes, fire vents, and poison vents use idle, warning, active, cooldown, and reset phases, with visible warnings and damage to players and enemies. The pressure plate opens a gate. Swinging blades, rolling boulders, collapsing floors, tripwires, and rune beams remain; live timing review remains. |
 | Attack/defense mutual exclusion and keyboard/touch controls | **Partially working** | Existing shared attack/block handlers and cooldown logic were preserved byte-for-byte in the input section. This pass did not run live browser input tests. |
@@ -95,18 +96,19 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Saved and reloaded the sluice and cache flags through `dragonboundPolishedSave`; both persist at schema version 4. Older saves with no sluice fields retain the safe false defaults.
 - Exercised checkpoint activation and JSON save/reload; verified the shortcut saves the source room before returning to Ashen Entry, dungeon defeat returns to the saved checkpoint, and a defeat outside the dungeon retains the village fallback. Confirmed the checkpoint sigil and shortcut portal are nonblocking and the room/door graph is unchanged.
 - Simulated Elder Rowan’s one-time key handoff, the first gate remaining locked without a key, E unlocking and persisting it, and forward migration of a legacy save already past that gate. Confirmed saves at the Ashen Entry remain gated and the 11-room/12-door graph is unchanged.
+- Built the Brazier Gallery and Drowned Halls from their actual room definitions; confirmed both clue tiles and their adjacent approach tiles are walkable. Simulated both clue discoveries, duplicate interaction, save state, stage update, and journal gating.
 - Boss crystal, shield, phase, telegraph, damage, one-time reward, and schema-3 migration checks passed in the prior source-level boss harness.
-- Deployed-browser smoke check on the asset commit confirmed the embedded atlases, visible Pixel Dungeon floor/wall art, Play, and the M/Escape map controls. The tested save was already in cleared Broken Crossroads, so the new bat and Kenney prop rooms were not visually reached. The Drowned Halls water interaction, poison-vent cycle, checkpoint, return shortcut, key handoff, legacy key migration, and respawn routing were checked with source-level harnesses only; the new visuals and live route were not browser-tested. Mobile and console-log inspection remain outstanding.
+- Deployed-browser smoke check on the asset commit confirmed the embedded atlases, visible Pixel Dungeon floor/wall art, Play, and the M/Escape map controls. The tested save was already in cleared Broken Crossroads, so the new bat and Kenney prop rooms were not visually reached. The Drowned Halls water interaction, poison-vent cycle, checkpoint, return shortcut, key handoff, legacy key migration, two clue pickups, and respawn routing were checked with source-level harnesses only; the new visuals and live route were not browser-tested. Mobile and console-log inspection remain outstanding.
 
 ## Files changed in the current slice
 
-- `index.html` — adds Rowan’s Hollow Crown introduction, saved key handoff and gate, and room-transition save ordering alongside the checkpoint/return gate, poison vents, sluice puzzle, and one-time cache reward.
+- `index.html` — adds two persistent, journal-gated Hollow Crown clues in addition to Rowan’s key introduction, checkpoint/return gate, poison vents, sluice puzzle, and one-time cache reward.
 - `IMPLEMENTATION_STATUS.md` — records the water puzzle, save checks, and revised remaining stages.
 
 ## Remaining implementation stages
 
 1. Expand the puzzle catalog with rotatable statues, light/shadow clues, boulder shortcuts, and additional crystal-seal interactions; add swinging blades, rolling boulders, collapsing floors, tripwires, and rune-beam traps.
-2. Continue The Hollow Crown story with four seal-keeper clues, main and optional quest progression, and the saved final choice with distinct endings.
+2. Continue The Hollow Crown story with the remaining two seal-keeper clues, later main and optional quest progression, and the saved final choice with distinct endings.
 3. Add enemy-clear doors and connect reward materials, food, gear, and crafting to progression.
 4. Audit the village, woods, swamp, and highlands layouts; complete keyboard-first UI, cooking/survival, quest, save, and accessibility checks.
 5. Run desktop and mobile playthroughs from the title screen through the boss, including map fog-of-war, combat mutual exclusion, puzzles, responsive panels, and save/reload.
