@@ -23,7 +23,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Added save schema version 4 while retaining the existing `dragonboundPolishedSave` key. Older saves receive safe defaults; schema-3 migration removes the former ordinary `Y` enemy from Warden’s Approach so the upgraded save can start the dragon encounter. Player stats, inventory, gold, and other progress are preserved.
 - Added real dungeon darkness using a viewport-sized mask, with light radiating from the player and current-room sources. Tile ray checks stop light at stone walls and sealed doors; unexplored rooms remain hidden.
 - Added warm torch flicker, blue crystal light, a violet rune altar, and brief illumination from Ember Dart and Mending Light. The existing brightness control affects dungeon darkness; reduced motion removes torch flicker, and narrow viewports use fewer light rays.
-- Reworked timed spikes into a reusable five-phase trap cycle (idle, warning, active, cooldown, reset), added two fire vents to the lower west chamber, and applied trap damage to players and enemies.
+- Reworked timed hazards into a reusable five-phase cycle (idle, warning, active, cooldown, reset), with two fire vents in the lower west chamber and two poison vents in Cinder Walk. Both use the shared player/enemy damage loop; poison vents have green vapor and a distinct warning/damage cue.
 - Kept the existing local save key. Lighting derives from current-room tiles and saved torch state, while trap cycles reset predictably on room entry.
 - Added a pushable stone block and pressure plate in Broken Crossroads. The plate opens the east gate; pushes stop at walls, closed doors, other blocks, and enemies.
 - Added the multi-phase Vareth encounter in Warden’s Approach. Three interactable crystals break the shield; telegraphed breath and slam attacks, three health phases, and timed recovery windows make the dragon vulnerable. Arena spikes and fire vents use the existing warning cycle.
@@ -54,7 +54,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Torch puzzle | **Working** | Three braziers can be lit independently with E; the third opens the connected sealed gate. The state is saved. |
 | Movable-block/pressure-plate, mirror-beam, water, statue, boulder, shadow, and final-crystal puzzles | **Partially working** | The block/plate and mirror-beam puzzles persist. Drowned Halls now has a valve-controlled flooded cache corridor: water blocks movement until drained, and the cache reward is one-time and saved. Statue, boulder, shadow, and a distinct final-crystal puzzle remain. |
 | Rune-sequence puzzle | **Partially working** | The existing keyboard/touch rune choice sequence opens the optional reliquary gate and saves progress. It has not received a full browser interaction test in this pass. |
-| Reusable traps with warnings and fair reset timing | **Partially working** | Spikes and fire vents use idle, warning, active, cooldown, and reset phases, with visible warnings and damage to players and enemies. The pressure plate opens a gate. Swinging blades, rolling boulders, poison vents, and rune beams remain; live timing review remains. |
+| Reusable traps with warnings and fair reset timing | **Partially working** | Spikes, fire vents, and poison vents use idle, warning, active, cooldown, and reset phases, with visible warnings and damage to players and enemies. The pressure plate opens a gate. Swinging blades, rolling boulders, collapsing floors, tripwires, and rune beams remain; live timing review remains. |
 | Attack/defense mutual exclusion and keyboard/touch controls | **Partially working** | Existing shared attack/block handlers and cooldown logic were preserved byte-for-byte in the input section. This pass did not run live browser input tests. |
 | Enemy AI, wall behavior, and distinct enemy attacks | **Partially working** | Existing enemy movement and attack behavior remain; separate dungeon maps now constrain enemies to a room. More enemy-specific behaviors and hazard interactions remain. |
 | Multi-phase dragon boss and victory progression | **Partially working** | Vareth now has three crystal seals, telegraphed breath/slam patterns, three health phases, recovery damage windows, arena hazards, a saved defeat, and a one-time hoard reward. Source-level checks passed; the full encounter still needs live browser playtesting and balance review. |
@@ -80,7 +80,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Simulated loading a version-1 dungeon save and confirmed room migration and player inventory/stat preservation.
 - Confirmed the existing keyboard/touch input handler section and `dragonboundPolishedSave` key are unchanged; old saves migrate to version 4 with safe defaults.
 - Parsed the full inline JavaScript and checked HTML tag balance.
-- Exercised both trap types through all five phases and verified all eleven dungeon room builders still produce 28×18 maps with valid boundary openings.
+- Exercised spike, fire, and poison trap definitions through all five phases; verified poison vents use the existing player and enemy hazard damage loops. Confirmed both poison vent markers are in Cinder Walk and the 11-room/12-door dungeon graph is unchanged.
 - Checked wall occlusion against a wall, open floor, and out-of-bounds rays; confirmed unlit braziers emit no light and crystal, altar, and Ember spell sources are present.
 - Simulated pushing the block onto the plate; verified the door opens and a wall blocks further pushes. Solved the mirror beam by rotating the second mirror and confirmed the sealed-route states update.
 - Migrated a mock schema-2 save and confirmed health, magic, gold, inventory, and room identity persist.
@@ -91,16 +91,16 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Exercised the Drowned Halls builder and collision: four cells block movement while flooded, become passable after the lever is pulled, and the chamber walls leave only the intended corridor. The chest refuses collection while flooded, grants 40 gold and one crystal after draining, and cannot be claimed twice.
 - Saved and reloaded the sluice and cache flags through `dragonboundPolishedSave`; both persist at schema version 4. Older saves with no sluice fields retain the safe false defaults.
 - Boss crystal, shield, phase, telegraph, damage, one-time reward, and schema-3 migration checks passed in the prior source-level boss harness.
-- Deployed-browser smoke check on the asset commit confirmed the embedded atlases, visible Pixel Dungeon floor/wall art, Play, and the M/Escape map controls. The tested save was already in cleared Broken Crossroads, so the new bat and Kenney prop rooms were not visually reached. The later Drowned Halls water interaction was checked in source-level harnesses only; mobile and console-log inspection remain outstanding.
+- Deployed-browser smoke check on the asset commit confirmed the embedded atlases, visible Pixel Dungeon floor/wall art, Play, and the M/Escape map controls. The tested save was already in cleared Broken Crossroads, so the new bat and Kenney prop rooms were not visually reached. The Drowned Halls water interaction and new poison-vent cycle were checked with source-level harnesses only; poison vent visuals and timing were not browser-tested. Mobile and console-log inspection remain outstanding.
 
 ## Files changed in the current slice
 
-- `index.html` — adds the persistent Drowned Halls sluice puzzle and one-time cache reward on top of the existing dungeon, boss, and asset work.
+- `index.html` — adds the Cinder Walk poison vents alongside the Drowned Halls sluice puzzle and one-time cache reward.
 - `IMPLEMENTATION_STATUS.md` — records the water puzzle, save checks, and revised remaining stages.
 
 ## Remaining implementation stages
 
-1. Expand the puzzle catalog with rotatable statues, light/shadow clues, boulder shortcuts, and additional crystal-seal interactions; add swinging blades, rolling boulders, poison vents, collapsing floors, tripwires, and rune-beam traps.
+1. Expand the puzzle catalog with rotatable statues, light/shadow clues, boulder shortcuts, and additional crystal-seal interactions; add swinging blades, rolling boulders, collapsing floors, tripwires, and rune-beam traps.
 2. Complete The Hollow Crown story: village elder/key introduction, the four seal-keeper clues, main and optional quest progression, and the saved final choice with distinct endings.
 3. Add dungeon checkpoints, a return shortcut, key/enemy-clear doors, and connect reward materials, food, gear, and crafting to progression.
 4. Audit the village, woods, swamp, and highlands layouts; complete keyboard-first UI, cooking/survival, quest, save, and accessibility checks.
