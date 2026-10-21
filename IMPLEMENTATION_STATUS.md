@@ -4,6 +4,10 @@ Audit updated: 2026-10-20
 Repository: `powerpug404/dragonbound-quest`  
 Project shape: one `index.html` containing the game markup, styles, JavaScript, and embedded image data. No separate source modules, test runner, or external runtime dependencies were found.
 
+## Temporary checkpoint (2026-10-20)
+
+Work is paused after the inventory action and world-map reachability slices. The latest verified commit on `main` is `de85e1479bf02590e2fc502d699b63f768762614` (world-map reachability audit). There are no uncommitted workspace edits in this checkpoint. Resume with the first remaining implementation stage below: continue the dungeon redesign with another contained puzzle/secret slice, then update this audit with its checks before moving to the next stage. Browser/mobile end-to-end verification remains the largest unresolved validation item.
+
 ## Status key
 
 - **Working**: implemented and checked in this pass.
