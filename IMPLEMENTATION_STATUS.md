@@ -70,7 +70,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Rune-sequence puzzle | **Partially working** | The existing keyboard/touch rune choice sequence opens the optional reliquary gate and saves progress. It has not received a full browser interaction test in this pass. |
 | Reusable traps with warnings and fair reset timing | **Partially working** | Spikes, fire vents, poison vents, a swinging blade, a pressure-plate-triggered rolling boulder, and collapsing floors now warn, damage players/enemies, and reset. The boulder has two dodge lanes and blocking reduces its damage; collapsing tiles evacuate caught entities and block entry while open. The Cinder Walk tripwire has a warning volley, sneaking bypass, enemy damage, and a clear-lane reset. Rune Antechamber alternates warning-led horizontal and vertical beams that damage players and enemies through a shared lane check; both entrances remain safe. Further patterns and live timing review remain. |
 | Attack/defense mutual exclusion and keyboard/touch controls | **Partially working** | Source-level state-machine checks cover shared keyboard/touch handlers, 500 ms attack recovery, 320 ms defense release recovery, mutual exclusion, repeated-key guards, pointer cancellation, focus loss, modal opening, and area transitions. Live browser and physical-device input checks remain. |
-| Enemy AI, wall behavior, and distinct enemy attacks | **Partially working** | Existing enemy movement and attack behavior remain; separate dungeon maps now constrain enemies to a room. More enemy-specific behaviors and hazard interactions remain. |
+| Enemy AI, wall behavior, and distinct enemy attacks | **Partially working** | Separate dungeon maps constrain enemies to a room. Rune Antechamber now has a skeleton-and-bat encounter, so its existing clear gate is earned through combat rather than auto-clearing on entry. More enemy-specific behaviors and hazard interactions remain. |
 | Multi-phase dragon boss and victory progression | **Partially working** | Vareth now has the lower-west-east crystal seal, telegraphed breath/slam patterns, three health phases, recovery damage windows, arena hazards, a saved defeat, and a one-time hoard reward. Older saves with preexisting partial crystal activations preserve them through a legacy progression path. Source-level checks passed; the full encounter still needs live browser playtesting and balance review. |
 | Full dungeon map and minimap from real graph state | **Partially working** | The full map uses the actual graph and visited/cleared state. The minimap now shows discovered rooms only. Locked exits are labeled. Room navigation and small-screen panning need a live-device pass. |
 | Keyboard-first menus, modal stack, focus, and touch input | **Partially working** | Existing global keyboard handling, modal stack, menu focus, Escape handling, touch buttons, and responsive panels remain. Every interface and puzzle still needs a systematic keyboard/touch audit. |
@@ -86,9 +86,10 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 
 - Re-inspected both user-supplied asset folders, their license files, Tiny Dungeon’s 16×16/12-column Tiled sheet metadata, and Pixel Dungeon’s JSON frame metadata. They are the same sources already embedded in the game; no duplicate import or external dependency was added.
 
-- Parsed the inline JavaScript after adding the transaction confirmation flow.
+- Parsed the inline JavaScript after adding the transaction confirmation flow and Rune Antechamber encounter.
 - Checked static HTML tag nesting and verified the transaction dialog's labeled, focusable controls.
 - Exercised the shared confirmation helpers in an isolated harness: confirmation executes once and leaves a nested shop open afterward.
+- Built Rune Antechamber and verified the skeleton and bat spawn on open, walkable floor cells. Exercised its Drowned Halls clear gate before and after room clear, including the legacy path for saves already in Drowned Halls.
 - Checked HTML tag nesting and confirmed there are no external script tags.
 - Exercised all eleven room builders and verified their 28×18 dimensions and enclosed edges.
 - Verified all twelve graph links have door cells on both sides and passable arrival positions.
@@ -127,7 +128,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 
 ## Files changed in the current slice
 
-- `index.html` — routes room transitions through the centralized held-input reset and adds a reusable confirmation dialog for purchases, NPC services/trades, the village-fund handoff, and inventory drops.
+- `index.html` — routes room transitions through the centralized held-input reset, adds a reusable confirmation dialog for purchases, NPC services/trades, the village-fund handoff, and inventory drops, and adds a skeleton-and-bat combat encounter to Rune Antechamber.
 - `IMPLEMENTATION_STATUS.md` — records the transaction behavior and source-level checks; live browser/mobile UI testing remains outstanding.
 
 ## Remaining implementation stages
