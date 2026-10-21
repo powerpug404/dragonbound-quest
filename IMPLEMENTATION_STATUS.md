@@ -20,11 +20,13 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Added a timed spike lane with a visible warning period and damage during its active interval.
 - Persisted discovered and cleared rooms, torch progress, the reliquary reward, gathered nodes, and living dungeon enemy positions and health.
 - Added one-time interactable nodes for swamp moss, forest herbs and mushrooms, and highlands crystals. These make the swamp-moss quest and mushroom-soup recipe collectible through gameplay.
-- Added save schema version 2 while retaining the existing `dragonboundPolishedSave` key. Older dungeon saves are mapped into a local room position with their inventory and stats preserved.
+- Added save schema version 3 while retaining the existing `dragonboundPolishedSave` key. Version-1 and version-2 saves receive safe defaults for new progression fields; inventory, stats, and legacy dungeon position are preserved.
 - Added real dungeon darkness using a viewport-sized mask, with light radiating from the player and current-room sources. Tile ray checks stop light at stone walls and sealed doors; unexplored rooms remain hidden.
 - Added warm torch flicker, blue crystal light, a violet rune altar, and brief illumination from Ember Dart and Mending Light. The existing brightness control affects dungeon darkness; reduced motion removes torch flicker, and narrow viewports use fewer light rays.
 - Reworked timed spikes into a reusable five-phase trap cycle (idle, warning, active, cooldown, reset), added two fire vents to the lower west chamber, and applied trap damage to players and enemies.
-- Kept the existing local save key and schema version; the new lights derive from current room tiles and saved torch state, while trap cycles reset predictably on room entry.
+- Kept the existing local save key. Lighting derives from current-room tiles and saved torch state, while trap cycles reset predictably on room entry.
+- Added a pushable stone block and pressure plate in Broken Crossroads. The plate opens the east gate; pushes stop at walls, closed doors, other blocks, and enemies.
+- Added a rotatable two-mirror beam puzzle in Buried Gallery. The visible beam follows mirror direction, the receiver opens both dragon-ward routes, and mirror angles and gate progress persist.
 - Added this audit and implementation roadmap.
 
 ## Requirement audit
@@ -44,9 +46,9 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Hide unvisited dungeon room interiors | **Working** | Only the current room is rendered. The full map and minimap add rooms only after discovery; the secret vault is not shown until reached. |
 | Actual dynamic lighting and wall-occluded visibility | **Partially working** | A room-sized darkness mask, player-centered accessibility reveal, warm torches, blue crystals, violet rune light, wall/sealed-door occlusion, and brief Ember/Mending illumination are implemented. Brightness and reduced motion affect the mask. Detection-spell reveals and light-revealed clues/secrets remain; browser/mobile performance has not been reviewed. |
 | Torch puzzle | **Working** | Three braziers can be lit independently with E; the third opens the connected sealed gate. The state is saved. |
-| Movable-block/pressure-plate, mirror-beam, water, statue, boulder, shadow, and final-crystal puzzles | **Missing** | These systems need reusable puzzle state and world effects. |
+| Movable-block/pressure-plate, mirror-beam, water, statue, boulder, shadow, and final-crystal puzzles | **Partially working** | A movable block opens a plate-sealed door; a visible two-mirror beam opens the dragon-ward route. Both persist and work through movement/E interaction. Water, statue, boulder, shadow, and final-crystal puzzles remain. |
 | Rune-sequence puzzle | **Partially working** | The existing keyboard/touch rune choice sequence opens the optional reliquary gate and saves progress. It has not received a full browser interaction test in this pass. |
-| Reusable traps with warnings and fair reset timing | **Partially working** | Spikes and fire vents now use idle, warning, active, cooldown, and reset phases, with visible warnings and damage to players and enemies. Pressure plates, swinging blades, rolling boulders, poison vents, and rune beams remain; live timing review remains. |
+| Reusable traps with warnings and fair reset timing | **Partially working** | Spikes and fire vents use idle, warning, active, cooldown, and reset phases, with visible warnings and damage to players and enemies. The pressure plate opens a gate. Swinging blades, rolling boulders, poison vents, and rune beams remain; live timing review remains. |
 | Attack/defense mutual exclusion and keyboard/touch controls | **Partially working** | Existing shared attack/block handlers and cooldown logic were preserved byte-for-byte in the input section. This pass did not run live browser input tests. |
 | Enemy AI, wall behavior, and distinct enemy attacks | **Partially working** | Existing enemy movement and attack behavior remain; separate dungeon maps now constrain enemies to a room. More enemy-specific behaviors and hazard interactions remain. |
 | Multi-phase dragon boss and victory progression | **Missing** | Existing wyrms are ordinary enemies; no shield crystals, boss phases, arena hazards, or victory reward sequence is implemented. |
@@ -55,7 +57,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | HUD, inventory, spellbook, journal, dialogue, shop, settings, and save UI | **Partially working** | Existing panels and actions remain, including inventory use, spells, quests, shop, settings, and local saves. Full overflow, focus restoration, and mobile layout testing is outstanding. |
 | Health, magic, hunger, cooking, and item use | **Partially working** | Existing stats and cooking remain. New mushroom nodes provide a way to acquire soup ingredients. Crafting, recipe coverage, hunger balance, and edge cases need a full audit. |
 | Gathering resources and preventing duplicate pickups | **Working** | E gathers nearby nodes; collected locations are stored and removed on area reload. Tested for swamp moss, herbs, mushrooms, and crystals. |
-| Save schema, safe migration, and progression persistence | **Partially working** | Schema version 2 keeps the old key and defaults new fields. Legacy dungeon position and player values were checked with a mock save. Every progression flag still needs a full save/load audit. |
+| Save schema, safe migration, and progression persistence | **Partially working** | Schema version 3 keeps the old key and initializes lighting, block, plate, and mirror fields for older saves. A version-2 mock save preserved dungeon position, inventory, and player values; every progression flag still needs a full save/load audit. |
 | Asset manifest, fallbacks, and optional supplied art | **Partially working** | Existing embedded assets and fallbacks remain. A centralized manifest and additional animation/sound integration are not complete. |
 | External libraries/dependencies | **Working** | No external library or runtime dependency was added. |
 | Browser/mobile visual and manual gameplay verification | **Partially working** | In-memory room/door/puzzle/resource/save checks and source parsing passed. No live browser, mobile device, or screenshot review was performed in this pass. |
@@ -70,19 +72,21 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Simulated leaving and revisiting a room with a damaged enemy; its HP was restored.
 - Gathered one node of each new resource type, reloaded its area, and confirmed the node stayed collected.
 - Simulated loading a version-1 dungeon save and confirmed room migration and player inventory/stat preservation.
-- Confirmed the existing keyboard/touch input handler section, save key, and save schema version are unchanged.
+- Confirmed the existing keyboard/touch input handler section and `dragonboundPolishedSave` key are unchanged; schema-2 saves migrate to version 3 with safe defaults.
 - Parsed the full inline JavaScript and checked HTML tag balance.
 - Exercised both trap types through all five phases and verified all ten dungeon room builders still produce 28×18 maps with valid boundary openings.
-- Checked wall occlusion against a wall, open floor, and out-of-bounds rays; confirmed unlit brazier tiles emit no light and crystal, altar, and Ember spell sources are present.
+- Checked wall occlusion against a wall, open floor, and out-of-bounds rays; confirmed unlit braziers emit no light and crystal, altar, and Ember spell sources are present.
+- Simulated pushing the block onto the plate; verified the door opens and a wall blocks further pushes. Solved the mirror beam by rotating the second mirror and confirmed the sealed-route states update.
+- Migrated a mock schema-2 save and confirmed health, magic, gold, inventory, and room identity persist.
 
 ## Files changed in the current slice
 
-- `index.html` — added the dungeon light mask, spell illumination, crystal source, and phased spikes/fire vents.
-- `IMPLEMENTATION_STATUS.md` — updated the audit, checks, and remaining stages.
+- `index.html` — added the dungeon light mask, spell illumination, crystal source, phased spikes/fire vents, persistent pressure-plate puzzle, and mirror-beam gate.
+- `IMPLEMENTATION_STATUS.md` — updated the audit, checks, schema version, and remaining stages.
 
 ## Remaining implementation stages
 
-1. Build reusable puzzle components for movable blocks and plates, mirror beams, water mechanisms, statues, light/shadow clues, and boulder shortcuts; expand the trap catalog.
+1. Expand the puzzle catalog with water mechanisms, statues, light/shadow clues, boulder shortcuts, final crystals, and reusable puzzle helpers; add swinging blades, rolling boulders, poison vents, and rune-beam traps.
 2. Add dungeon checkpoints, a return shortcut, key/enemy-clear doors, and the multi-phase dragon boss with crystal-shield progression.
 3. Audit and improve the village, woods, swamp, and highlands layouts; complete keyboard-first UI, crafting/survival, quest, save, and progression checks.
 4. Run live desktop and mobile gameplay checks for the full route from title menu through the boss, including map discovery, combat mutual exclusion, responsive panels, and save reload.
