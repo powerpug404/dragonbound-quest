@@ -87,6 +87,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Re-inspected both user-supplied asset folders, their license files, Tiny Dungeon’s 16×16/12-column Tiled sheet metadata, and Pixel Dungeon’s JSON frame metadata. They are the same sources already embedded in the game; no duplicate import or external dependency was added.
 
 - Parsed the inline JavaScript after adding the transaction confirmation flow, Rune Antechamber encounter, and inventory action states.
+- Ran a tile-center walkability pass over the map builders: the village spawn reaches all seven building entrances and its swamp, woods, and highlands exits under the current building/tree/rock/well/campfire collision rules. Swamp, woods, and highlands spawns reach their exits, the ancient stone/ranger/oracle landmarks, and all resource nodes; the swamp's village and dungeon entry points are connected. This is static grid evidence; rendered collision and visual review remain outstanding.
 - Checked static HTML tag nesting and verified the transaction dialog's labeled, focusable controls.
 - Exercised the shared confirmation helpers in an isolated harness: confirmation executes once and leaves a nested shop open afterward.
 - Built Rune Antechamber and verified the skeleton and bat spawn on open, walkable floor cells. Exercised its Drowned Halls clear gate before and after room clear, including the legacy path for saves already in Drowned Halls.
