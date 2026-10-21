@@ -74,7 +74,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Multi-phase dragon boss and victory progression | **Partially working** | Vareth now has the lower-west-east crystal seal, telegraphed breath/slam patterns, three health phases, recovery damage windows, arena hazards, a saved defeat, and a one-time hoard reward. Older saves with preexisting partial crystal activations preserve them through a legacy progression path. Source-level checks passed; the full encounter still needs live browser playtesting and balance review. |
 | Full dungeon map and minimap from real graph state | **Partially working** | The full map uses the actual graph and visited/cleared state. The minimap now shows discovered rooms only. Locked exits are labeled. Room navigation and small-screen panning need a live-device pass. |
 | Keyboard-first menus, modal stack, focus, and touch input | **Partially working** | Existing global keyboard handling, modal stack, menu focus, Escape handling, touch buttons, and responsive panels remain. Every interface and puzzle still needs a systematic keyboard/touch audit. |
-| HUD, inventory, spellbook, journal, dialogue, shop, settings, and save UI | **Partially working** | Existing panels and actions remain. A shared confirmation dialog now protects shop purchases, NPC services/trades, the Elder's resource contribution, and dropping inventory items; callbacks recheck affordability, required materials, and one-time flags before mutating state. Full overflow, focus restoration, and mobile layout testing remains outstanding. |
+| HUD, inventory, spellbook, journal, dialogue, shop, settings, and save UI | **Partially working** | Existing panels and actions remain. A shared confirmation dialog protects shop purchases, NPC services/trades, the Elder's resource contribution, and item drops; callbacks recheck affordability, materials, and one-time flags. Inventory Use is disabled for ingredients and empty selections, and Drop is disabled for empty selections. Overflow, focus restoration, and mobile layout testing remain outstanding. |
 | Health, magic, hunger, cooking, and item use | **Partially working** | Existing stats and cooking remain. New mushroom nodes provide a way to acquire soup ingredients. Crafting, recipe coverage, hunger balance, and edge cases need a full audit. |
 | Gathering resources and preventing duplicate pickups | **Working** | E gathers nearby nodes; collected locations are stored and removed on area reload. Tested for swamp moss, herbs, mushrooms, and crystals. |
 | Save schema, safe migration, and progression persistence | **Partially working** | Schema version 4 keeps the old key and migrates previous versions with defaults. A version-3 migration preserves inventory, stats, gold, and unrelated progress while allowing the new boss to spawn. The sluice/cache, checkpoint/shortcut, key/story, clue, ending, light-inscription, crystal-seal clue/progress, cracked-wall, and cracked-cache fields default safely for older saves and round-trip with the existing key; the save version remains 4. Saves already beyond the new first gate migrate as unlocked, preventing a softlock. Live full-progression save/load coverage remains. |
@@ -86,11 +86,12 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 
 - Re-inspected both user-supplied asset folders, their license files, Tiny Dungeon’s 16×16/12-column Tiled sheet metadata, and Pixel Dungeon’s JSON frame metadata. They are the same sources already embedded in the game; no duplicate import or external dependency was added.
 
-- Parsed the inline JavaScript after adding the transaction confirmation flow and Rune Antechamber encounter.
+- Parsed the inline JavaScript after adding the transaction confirmation flow, Rune Antechamber encounter, and inventory action states.
 - Checked static HTML tag nesting and verified the transaction dialog's labeled, focusable controls.
 - Exercised the shared confirmation helpers in an isolated harness: confirmation executes once and leaves a nested shop open afterward.
 - Built Rune Antechamber and verified the skeleton and bat spawn on open, walkable floor cells. Exercised its Drowned Halls clear gate before and after room clear, including the legacy path for saves already in Drowned Halls.
 - Ran the new skeleton and bat through the shared attack/damage handlers; each enemy died from a normal hit, loot was awarded, and the room-clear gate activated only after both were defeated.
+- Exercised the actual inventory renderer: owned consumables enable Use and Drop; ingredients disable Use but allow Drop; empty selections disable both actions.
 - Checked HTML tag nesting and confirmed there are no external script tags.
 - Exercised all eleven room builders and verified their 28×18 dimensions and enclosed edges.
 - Verified all twelve graph links have door cells on both sides and passable arrival positions.
@@ -129,7 +130,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 
 ## Files changed in the current slice
 
-- `index.html` — routes room transitions through the centralized held-input reset, adds a reusable confirmation dialog for purchases, NPC services/trades, the village-fund handoff, and inventory drops, and adds a skeleton-and-bat combat encounter to Rune Antechamber.
+- `index.html` — routes room transitions through the centralized held-input reset, adds a reusable confirmation dialog, adds the Rune Antechamber skeleton-and-bat encounter, and disables inventory actions that are unavailable for the current selection.
 - `IMPLEMENTATION_STATUS.md` — records the transaction behavior and source-level checks; live browser/mobile UI testing remains outstanding.
 
 ## Remaining implementation stages
