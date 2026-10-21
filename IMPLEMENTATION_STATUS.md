@@ -69,7 +69,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Hollow Crown story and quest progression | **Partially working** | Rowan’s key introduction, four discoverable testimonies, conditional ending gate, keyboard/touch choice, and persisted truth/silence outcomes now work in source checks. Optional story quests and live narrative playthrough remain.
 | Rune-sequence puzzle | **Partially working** | The existing keyboard/touch rune choice sequence opens the optional reliquary gate and saves progress. It has not received a full browser interaction test in this pass. |
 | Reusable traps with warnings and fair reset timing | **Partially working** | Spikes, fire vents, poison vents, a swinging blade, a pressure-plate-triggered rolling boulder, and collapsing floors now warn, damage players/enemies, and reset. The boulder has two dodge lanes and blocking reduces its damage; collapsing tiles evacuate caught entities and block entry while open. The Cinder Walk tripwire has a warning volley, sneaking bypass, enemy damage, and a clear-lane reset. Rune Antechamber alternates warning-led horizontal and vertical beams that damage players and enemies through a shared lane check; both entrances remain safe. Further patterns and live timing review remain. |
-| Attack/defense mutual exclusion and keyboard/touch controls | **Partially working** | Existing shared attack/block handlers and cooldown logic were preserved byte-for-byte in the input section. This pass did not run live browser input tests. |
+| Attack/defense mutual exclusion and keyboard/touch controls | **Partially working** | Source-level state-machine checks cover shared keyboard/touch handlers, 500 ms attack recovery, 320 ms defense release recovery, mutual exclusion, repeated-key guards, pointer cancellation, focus loss, modal opening, and area transitions. Live browser and physical-device input checks remain. |
 | Enemy AI, wall behavior, and distinct enemy attacks | **Partially working** | Existing enemy movement and attack behavior remain; separate dungeon maps now constrain enemies to a room. More enemy-specific behaviors and hazard interactions remain. |
 | Multi-phase dragon boss and victory progression | **Partially working** | Vareth now has the lower-west-east crystal seal, telegraphed breath/slam patterns, three health phases, recovery damage windows, arena hazards, a saved defeat, and a one-time hoard reward. Older saves with preexisting partial crystal activations preserve them through a legacy progression path. Source-level checks passed; the full encounter still needs live browser playtesting and balance review. |
 | Full dungeon map and minimap from real graph state | **Partially working** | The full map uses the actual graph and visited/cleared state. The minimap now shows discovered rooms only. Locked exits are labeled. Room navigation and small-screen panning need a live-device pass. |
@@ -95,6 +95,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Gathered one node of each new resource type, reloaded its area, and confirmed the node stayed collected.
 - Simulated loading a version-1 dungeon save and confirmed room migration and player inventory/stat preservation.
 - Confirmed the existing keyboard/touch input handler section and `dragonboundPolishedSave` key are unchanged; old saves migrate to version 4 with safe defaults.
+- Exercised the attack/block state functions: attacks are ignored during block and defense recovery; blocking cannot begin during an attack and starts when a held Shift/O key or pointer becomes available after cooldown; release starts the 320 ms recovery. Verified keyboard repeat is filtered before J/P handling and both touch and keyboard route through shared handlers. The exact `loadArea` prefix saves the old dungeon room, clears keys/movement/pointer/block state, then changes area; modal, pointercancel, lost-pointer-capture, blur, and visibility-loss paths also clear held input.
 - Parsed the full inline JavaScript and checked HTML tag balance.
 - Exercised spike, fire, poison, and swinging-blade definitions through all five phases; verified the blade uses shared player/enemy damage handling, its tile and approach remain walkable, and reduced-motion behavior is honored. Confirmed the 11-room/12-door graph and all 28×18 room dimensions are unchanged.
 - Cleared the final Cinder Walk enemy through the actual room-clear handler and verified the lower gate opens; a remaining living enemy keeps it shut. Confirmed the closed door blocks movement, it opens after clear, north-side backtracking stays available, and saves already beyond the gate remain open.
@@ -124,8 +125,8 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 
 ## Files changed in the current slice
 
-- `index.html` — alternates the Rune Antechamber beam between horizontal and vertical warning/damage lanes.
-- `IMPLEMENTATION_STATUS.md` — records the beam patterns, lane checks, and remaining redesign roadmap.
+- `index.html` — routes room transitions through the centralized held-input reset to prevent stuck movement or blocking.
+- `IMPLEMENTATION_STATUS.md` — records combat and transition checks, with live browser/mobile input still outstanding.
 
 ## Remaining implementation stages
 
