@@ -29,6 +29,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Added two crumbling floor tiles in Buried Gallery. They warn, collapse briefly, damage and move caught players or enemies onto a safe neighboring tile, then reset; the trap state resets when leaving the room.
 - Added a concealed tripwire in Cinder Walk. Walking over it exposes a warning lane before paired darts cross the corridor; sneaking bypasses the trigger, enemies can trigger and be hit by it, blocking halves player damage, and the wire rearms after the lane clears.
 - Added a timed rune beam in Rune Antechamber. A dashed cyan warning precedes a room-wide horizontal beam; both the player and enemies take damage in its path, while the north/south room entrances remain safe.
+- Made the Cinder Walk exit to Lower Crypt an enemy-clear gate. The north route remains available for backtracking; the lower door opens when the room’s last enemy dies, and saves that have already reached Lower Crypt keep the route open.
 - Kept the existing local save key. Lighting derives from current-room tiles and saved torch state, while trap cycles reset predictably on room entry.
 - Added a pushable stone block and pressure plate in Broken Crossroads. The plate opens the east gate; pushes stop at walls, closed doors, other blocks, and enemies.
 - Added the multi-phase Vareth encounter in Warden’s Approach. Three interactable crystals break the shield; telegraphed breath and slam attacks, three health phases, and timed recovery windows make the dragon vulnerable. Arena spikes and fire vents use the existing warning cycle.
@@ -56,7 +57,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 | Consistent tile scale, collision, and depth sorting across all areas | **Partially working** | The project uses a 32-pixel tile scale. The new dungeon rooms have enclosed collision boundaries and vertical transitions. Other areas still need a full collision and layering audit. |
 | Separate, enclosed, graph-connected dungeon rooms | **Working** | Nine core room maps plus the optional Sealed Reliquary and post-boss Dragon’s Hoard are generated separately. Twelve links connect them; each paired doorway has a matching arrival position. |
 | Room-specific layouts, enemies, and saved state | **Partially working** | Layouts and enemy placements vary by room. Visited/cleared flags, living enemy HP/position, torch/rune/mirror/sluice state, key-gate progress, checkpoint state, and chest rewards persist. Several rooms still lack unique mechanics and rewards. |
-| Open, locked, puzzle-sealed, and enemy/key doors | **Partially working** | The first graph door is locked until the player receives Rowan’s key and uses E beside it; the rune, brazier, pressure-plate, mirror, and boss gates retain their puzzle/defeat conditions. Enemy-clear doors remain unimplemented. |
+| Open, locked, puzzle-sealed, and enemy/key doors | **Partially working** | The first graph door is locked until the player receives Rowan’s key and uses E beside it; rune, brazier, pressure-plate, mirror, boss, and Cinder Walk enemy-clear gates retain their conditions. The lower gate derives its open state from saved room-clear progress and preserves access for existing saves that already visited Lower Crypt. |
 | Room transitions, player stats, and save compatibility | **Partially working** | Dungeon transitions save the room being left before switching IDs. The Broken Crossroads rest sigil persists as a checkpoint and unlocks a shortcut to Ashen Entry. The full route still needs live transition and death testing. |
 | Hide unvisited dungeon room interiors | **Working** | Only the current room is rendered. The full map and minimap add rooms only after discovery; the secret vault is not shown until reached. |
 | Actual dynamic lighting and wall-occluded visibility | **Partially working** | A room-sized darkness mask, player-centered accessibility reveal, warm torches, blue crystals, violet rune light, wall/sealed-door occlusion, and brief Ember/Mending illumination are implemented. Brightness and reduced motion affect the mask. Detection-spell reveals and light-revealed clues/secrets remain; browser/mobile performance has not been reviewed. |
@@ -93,6 +94,7 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 - Confirmed the existing keyboard/touch input handler section and `dragonboundPolishedSave` key are unchanged; old saves migrate to version 4 with safe defaults.
 - Parsed the full inline JavaScript and checked HTML tag balance.
 - Exercised spike, fire, poison, and swinging-blade definitions through all five phases; verified the blade uses shared player/enemy damage handling, its tile and approach remain walkable, and reduced-motion behavior is honored. Confirmed the 11-room/12-door graph and all 28×18 room dimensions are unchanged.
+- Cleared the final Cinder Walk enemy through the actual room-clear handler and verified the lower gate opens; a remaining living enemy keeps it shut. Confirmed the closed door blocks movement, it opens after clear, north-side backtracking stays available, and saves already beyond the gate remain open.
 - Simulated the Rune Antechamber beam’s warning and active phases, player/enemy damage lane, clear approach near the room door, passable beam tile, and solid room boundary.
 - Simulated the Cinder Walk tripwire warning, dart volley, player damage, dodging out of the lane, sneaking bypass, enemy damage, blocking reduction, and walkable marker placement.
 - Simulated the rolling-boulder trigger, 0.85-second warning, escape through the north lane, player collision damage, reduced damage while blocking, enemy damage, and cooldown reset. Confirmed the trigger tile and both side lanes are passable.
@@ -114,13 +116,14 @@ Project shape: one `index.html` containing the game markup, styles, JavaScript, 
 
 ## Files changed in the current slice
 
-- `index.html` — adds the Rune Antechamber beam hazard alongside the Cinder Walk tripwire, Buried Gallery collapsing floors, Lower Crypt swinging blade and rolling boulder, Hollow Crown story progression, checkpoint, poison vents, and sluice puzzle.
+- `index.html` — adds a Cinder Walk enemy-clear exit to Lower Crypt alongside the Rune Antechamber beam hazard, tripwire, collapsing floors, and other dungeon/story progression.
+- `IMPLEMENTATION_STATUS.md` — records the enemy-clear gate, backward-compatible route check, and remaining progression work.
 - `IMPLEMENTATION_STATUS.md` — records the rune-beam and tripwire checks, current trap coverage, and revised remaining stages.
 
 ## Remaining implementation stages
 
 1. Expand the puzzle catalog with rotatable statues, light/shadow clues, boulder shortcuts, and additional crystal-seal interactions; add additional rune-beam patterns.
 2. Extend the completed four-clue ending arc with later main and optional quests and a full narrative playthrough.
-3. Add enemy-clear doors and connect reward materials, food, gear, and crafting to progression.
+3. Extend enemy-clear gates to more encounters and connect reward materials, food, gear, and crafting to progression.
 4. Audit the village, woods, swamp, and highlands layouts; complete keyboard-first UI, cooking/survival, quest, save, and accessibility checks.
 5. Run desktop and mobile playthroughs from the title screen through the boss, including map fog-of-war, combat mutual exclusion, puzzles, responsive panels, and save/reload.
